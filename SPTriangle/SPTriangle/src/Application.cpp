@@ -28,6 +28,54 @@ struct point2 {
 	
 };
 
+
+
+void DrawTriangle(point2 a, point2 b, point2 c) 
+{
+	float vertices[] = {
+		a.x, a.y,
+		b.x, b.y, 
+		c.x, c.y
+	};
+
+	unsigned int VAO;
+	glGenVertexArrays(1, &VAO);
+	glBindVertexArray(VAO);
+
+	unsigned int VBO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(1, &VAO);
+}
+
+void DrawGasket(point2 a, point2 b, point2 c, int n)
+{
+	if (n > 0)
+	{
+		point2 ab = (a + b) / 2.0;
+		point2 ca = (a + c) / 2.0;
+		point2 bc = (b + c) / 2.0;
+
+		DrawGasket(a, ab, ca, n - 1);
+		DrawGasket(c, bc, ca, n - 1);
+		DrawGasket(b, bc, ab, n - 1);
+	}
+	else
+	{
+		DrawTriangle(a, b, c);
+	}
+
+}
+
+
 int main()
 {
 	if (!glfwInit())
@@ -51,53 +99,19 @@ int main()
 
 
 	//Triangle
-	/*float vertices[] = {
-		0.0f, 0.5f, 1.0f,
-	   -0.5f, -0.5f, 1.0f,
-		0.5f, -0.5f, 1.0f
-	};*/
-
-	point2 vertices[3] = { point2(-0.5f, -0.5f), point2(0.5f, -0.5f), point2(0.0f, 0.5f) };
-	point2 points[POINT_COUNT];
-
-	points[0] = point2(0.2f, 0.1f);
 	
-	int idx = 0;
-	float arr[POINT_COUNT * 2] = { 0 };
-
-	for (int i = 1; i < POINT_COUNT; i++)
-	{
-		int j = rand() % 3;
-
-		points[i] = (points[i - 1] + vertices[j]) / 2.0f;
-
-		arr[idx] = points[i].x;
-		arr[idx + 1] = points[i].y;
-
-		idx += 2;
-	}
-
 	
 
 
 
 	Shader shader("res/shader/vertexShader.shader", "res/shader/fragmentShader.shader");
-
-	unsigned int VAO, VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
 	shader.use();
 
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(arr), arr , GL_STATIC_DRAW);
-
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, (void*)0);
-	glEnableVertexAttribArray(0);
-
-
 	
+
+	point2 a = { -0.5f, -0.5f };
+	point2 b = {  0.0f,  0.5f };
+	point2 c = {  0.5f, -0.5f };
 
 	glClearColor(0.2f, 0.2f, 0.3f, 1.0f);
 
@@ -105,9 +119,7 @@ int main()
 	{
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		glBindVertexArray(VAO);
-
-		glDrawArrays(GL_POINTS, 0, POINT_COUNT);
+		DrawGasket(a, b, c, 10);
 
 		glfwSwapBuffers(window);
 
@@ -116,3 +128,4 @@ int main()
 
 	
 }
+
